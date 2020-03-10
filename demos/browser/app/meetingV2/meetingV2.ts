@@ -31,7 +31,7 @@ import {
 class DemoTileOrganizer {
   private static MAX_TILES = 16;
   private tiles: { [id: number]: number } = {};
-  public tileStates: {[id: number]: boolean } = {};
+  public tileStates: { [id: number]: boolean } = {};
 
   acquireTileIndex(tileId: number): number {
     for (let index = 0; index < DemoTileOrganizer.MAX_TILES; index++) {
@@ -97,7 +97,7 @@ class TestSound {
 export enum ContentShareType {
   ScreenCapture,
   VideoFile,
-};
+}
 
 export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver {
   showActiveSpeakerScores = false;
@@ -108,8 +108,14 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
   sipURI: string | null = null;
   region: string | null = null;
   static readonly DID: string = '+17035550122';
-  static readonly BASE_URL: string = [location.protocol, '//', location.host, location.pathname.replace(/\/*$/, '/').replace('/v2', '')].join('');
-  static testVideo: string = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.360p.vp9.webm';
+  static readonly BASE_URL: string = [
+    location.protocol,
+    '//',
+    location.host,
+    location.pathname.replace(/\/*$/, '/').replace('/v2', ''),
+  ].join('');
+  static testVideo: string =
+    'https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.360p.vp9.webm';
   meetingSession: MeetingSession | null = null;
   audioVideo: AudioVideoFacade | null = null;
   tileOrganizer: DemoTileOrganizer = new DemoTileOrganizer();
@@ -135,12 +141,14 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
   // feature flags
   enableWebAudio = false;
 
+  screenshareTileId = 0;
+
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).app = this;
     this.switchToFlow('flow-authenticate');
     (document.getElementById('sdk-version') as HTMLSpanElement).innerHTML =
-      "amazon-chime-sdk-js@" + Versioning.sdkVersion;
+      'amazon-chime-sdk-js@' + Versioning.sdkVersion;
     this.initEventListeners();
     this.initParameters();
   }
@@ -217,7 +225,11 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
           this.showProgress('progress-authenticate');
           try {
             const response = await fetch(
-              `${DemoMeetingApp.BASE_URL}join?title=${encodeURIComponent(this.meeting)}&name=${encodeURIComponent(DemoMeetingApp.DID)}&region=${encodeURIComponent(this.region)}`,
+              `${DemoMeetingApp.BASE_URL}join?title=${encodeURIComponent(
+                this.meeting
+              )}&name=${encodeURIComponent(DemoMeetingApp.DID)}&region=${encodeURIComponent(
+                this.region
+              )}`,
               {
                 method: 'POST',
               }
@@ -303,9 +315,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
         try {
           this.showProgress('progress-join');
           await this.join();
-          this.audioVideo.stopVideoPreviewForVideoInput(document.getElementById(
-            'video-preview'
-          ) as HTMLVideoElement);
+          this.audioVideo.stopVideoPreviewForVideoInput(
+            document.getElementById('video-preview') as HTMLVideoElement
+          );
           this.audioVideo.chooseVideoInputDevice(null);
           this.hideProgress('progress-join');
           this.displayButtonStates();
@@ -376,9 +388,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     buttonSpeaker.addEventListener('click', _e => {
       new AsyncScheduler().start(async () => {
         if (this.toggleButton('button-speaker')) {
-          this.audioVideo.bindAudioElement(document.getElementById(
-            'meeting-audio'
-          ) as HTMLAudioElement);
+          this.audioVideo.bindAudioElement(
+            document.getElementById('meeting-audio') as HTMLAudioElement
+          );
         } else {
           this.audioVideo.unbindAudioElement();
         }
@@ -387,8 +399,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
 
     const buttonMeetingEnd = document.getElementById('button-meeting-end');
     buttonMeetingEnd.addEventListener('click', _e => {
-      const confirmEnd = (new URL(window.location.href).searchParams.get('confirm-end')) === 'true';
-      const prompt = 'Are you sure you want to end the meeting for everyone? The meeting cannot be used after ending it.';
+      const confirmEnd = new URL(window.location.href).searchParams.get('confirm-end') === 'true';
+      const prompt =
+        'Are you sure you want to end the meeting for everyone? The meeting cannot be used after ending it.';
       if (confirmEnd && !window.confirm(prompt)) {
         return;
       }
@@ -481,23 +494,43 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
 
   metricsDidReceive(clientMetricReport: ClientMetricReport): void {
     const metricReport = clientMetricReport.getObservableMetrics();
-    if (typeof metricReport.availableSendBandwidth === 'number' && !isNaN(metricReport.availableSendBandwidth)) {
+    if (
+      typeof metricReport.availableSendBandwidth === 'number' &&
+      !isNaN(metricReport.availableSendBandwidth)
+    ) {
       (document.getElementById('video-uplink-bandwidth') as HTMLSpanElement).innerHTML =
-        'Available Uplink Bandwidth: ' + String(metricReport.availableSendBandwidth / 1000) + ' Kbps';
-    } else if (typeof metricReport.availableOutgoingBitrate === 'number' && !isNaN(metricReport.availableOutgoingBitrate)) {
+        'Available Uplink Bandwidth: ' +
+        String(metricReport.availableSendBandwidth / 1000) +
+        ' Kbps';
+    } else if (
+      typeof metricReport.availableOutgoingBitrate === 'number' &&
+      !isNaN(metricReport.availableOutgoingBitrate)
+    ) {
       (document.getElementById('video-uplink-bandwidth') as HTMLSpanElement).innerHTML =
-        'Available Uplink Bandwidth: ' + String(metricReport.availableOutgoingBitrate / 1000) + ' Kbps';
+        'Available Uplink Bandwidth: ' +
+        String(metricReport.availableOutgoingBitrate / 1000) +
+        ' Kbps';
     } else {
       (document.getElementById('video-uplink-bandwidth') as HTMLSpanElement).innerHTML =
         'Available Uplink Bandwidth: Unknown';
     }
 
-    if (typeof metricReport.availableReceiveBandwidth === 'number' && !isNaN(metricReport.availableReceiveBandwidth)) {
+    if (
+      typeof metricReport.availableReceiveBandwidth === 'number' &&
+      !isNaN(metricReport.availableReceiveBandwidth)
+    ) {
       (document.getElementById('video-downlink-bandwidth') as HTMLSpanElement).innerHTML =
-        'Available Downlink Bandwidth: ' + String(metricReport.availableReceiveBandwidth / 1000) + ' Kbps';
-    } else if (typeof metricReport.availableIncomingBitrate === 'number' && !isNaN(metricReport.availableIncomingBitrate)) {
+        'Available Downlink Bandwidth: ' +
+        String(metricReport.availableReceiveBandwidth / 1000) +
+        ' Kbps';
+    } else if (
+      typeof metricReport.availableIncomingBitrate === 'number' &&
+      !isNaN(metricReport.availableIncomingBitrate)
+    ) {
       (document.getElementById('video-downlink-bandwidth') as HTMLSpanElement).innerHTML =
-        'Available Downlink Bandwidth: ' + String(metricReport.availableIncomingBitrate / 1000) + ' Kbps';
+        'Available Downlink Bandwidth: ' +
+        String(metricReport.availableIncomingBitrate / 1000) +
+        ' Kbps';
     } else {
       (document.getElementById('video-downlink-bandwidth') as HTMLSpanElement).innerHTML =
         'Available Downlink Bandwidth: Unknown';
@@ -570,7 +603,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
       }
       score = Math.floor(score * 100);
       if (score) {
-        rosterText += ` (${score})`
+        rosterText += ` (${score})`;
       }
       rosterText += '<span class="badge badge-pill ';
       let status = '';
@@ -628,11 +661,15 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
           }
           if (!this.roster[attendeeId].name) {
             const baseAttendeeId = new DefaultModality(attendeeId).base();
-            const response = await fetch(`${DemoMeetingApp.BASE_URL}attendee?title=${encodeURIComponent(this.meeting)}&attendee=${encodeURIComponent(baseAttendeeId)}`);
+            const response = await fetch(
+              `${DemoMeetingApp.BASE_URL}attendee?title=${encodeURIComponent(
+                this.meeting
+              )}&attendee=${encodeURIComponent(baseAttendeeId)}`
+            );
             const json = await response.json();
             let name = json.AttendeeInfo.Name;
             if (baseAttendeeId !== attendeeId) {
-              name += " «Content»";
+              name += ' «Content»';
               const selfAttendeeId = this.meetingSession.configuration.credentials.attendeeId;
               //If someone else share content, stop the current content share
               if (selfAttendeeId !== baseAttendeeId && this.isButtonOn('button-content-share')) {
@@ -661,7 +698,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     this.audioVideo.subscribeToActiveSpeakerDetector(
       new DefaultActiveSpeakerPolicy(),
       activeSpeakerHandler,
-      (scores: {[attendeeId:string]: number}) => {
+      (scores: { [attendeeId: string]: number }) => {
         for (const attendeeId in scores) {
           if (this.roster[attendeeId]) {
             this.roster[attendeeId].score = scores[attendeeId];
@@ -669,14 +706,16 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
         }
         this.updateRoster();
       },
-      this.showActiveSpeakerScores ? 100 : 0,
+      this.showActiveSpeakerScores ? 100 : 0
     );
   }
 
   // eslint-disable-next-line
   async joinMeeting(): Promise<any> {
     const response = await fetch(
-      `${DemoMeetingApp.BASE_URL}join?title=${encodeURIComponent(this.meeting)}&name=${encodeURIComponent(this.name)}&region=${encodeURIComponent(this.region)}`,
+      `${DemoMeetingApp.BASE_URL}join?title=${encodeURIComponent(
+        this.meeting
+      )}&name=${encodeURIComponent(this.name)}&region=${encodeURIComponent(this.region)}`,
       {
         method: 'POST',
       }
@@ -857,7 +896,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
       }
     );
     const cameras = await this.audioVideo.listVideoInputDevices();
-    this.cameraDeviceIds = cameras.map((deviceInfo) => {
+    this.cameraDeviceIds = cameras.map(deviceInfo => {
       return deviceInfo.deviceId;
     });
   }
@@ -951,9 +990,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     const device = this.videoInputSelectionToDevice(this.selectedVideoInput);
     if (device === null) {
       if (showPreview) {
-        this.audioVideo.stopVideoPreviewForVideoInput(document.getElementById(
-          'video-preview'
-        ) as HTMLVideoElement);
+        this.audioVideo.stopVideoPreviewForVideoInput(
+          document.getElementById('video-preview') as HTMLVideoElement
+        );
       }
       this.audioVideo.stopLocalVideoTile();
       this.toggleButton('button-camera', 'off');
@@ -963,9 +1002,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     }
     await this.audioVideo.chooseVideoInputDevice(device);
     if (showPreview) {
-      this.audioVideo.startVideoPreviewForVideoInput(document.getElementById(
-        'video-preview'
-      ) as HTMLVideoElement);
+      this.audioVideo.startVideoPreviewForVideoInput(
+        document.getElementById('video-preview') as HTMLVideoElement
+      );
     }
   }
 
@@ -1014,7 +1053,10 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     });
   }
 
-  private async contentShareTypeChanged(contentShareType: ContentShareType, videoUrl?: string): Promise<void> {
+  private async contentShareTypeChanged(
+    contentShareType: ContentShareType,
+    videoUrl?: string
+  ): Promise<void> {
     if (this.isButtonOn('button-content-share')) {
       await this.contentShareStop();
     }
@@ -1087,25 +1129,50 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
   }
 
   videoTileDidUpdate(tileState: VideoTileState): void {
-    this.log(`video tile updated: ${JSON.stringify(tileState, null, '  ')}`);
+    // this.log(`video tile updated: ${JSON.stringify(tileState, null, '  ')}`);
+    this.log(`video tile updated: ${tileState.tileId}`);
     if (!tileState.boundAttendeeId) {
       return;
     }
-    const selfAttendeeId = this.meetingSession.configuration.credentials.attendeeId;
+
+    if (!tileState.boundVideoStream) {
+      return;
+    }
+
+    if (tileState.boundVideoElement) {
+      return;
+    }
+
+    // const selfAttendeeId = this.meetingSession.configuration.credentials.attendeeId;
     const modality = new DefaultModality(tileState.boundAttendeeId);
-    if (modality.base() === selfAttendeeId && modality.hasModality(DefaultModality.MODALITY_CONTENT)) {
-      // don't bind one's own content
+    if (modality.hasModality(DefaultModality.MODALITY_CONTENT)) {
+      const tileElement = document.getElementById(`tile-screenshare`) as HTMLDivElement;
+      const videoElement = document.getElementById(`video-screenshare`) as HTMLVideoElement;
+      tileElement.style.display = 'block';
+      this.log(`binding video tile ${tileState.tileId} to ${videoElement.id}`);
+
+      if (this.screenshareTileId) {
+        this.audioVideo.unbindVideoElement(this.screenshareTileId);
+        this.screenshareTileId = 0;
+      }
+
+      this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+      this.screenshareTileId = tileState.tileId;
       return;
     }
     const tileIndex = tileState.localTile
       ? 16
       : this.tileOrganizer.acquireTileIndex(tileState.tileId);
     const tileElement = document.getElementById(`tile-${tileIndex}`) as HTMLDivElement;
-    const videoElement = document.getElementById(`video-${tileIndex}`) as HTMLVideoElement;
+    let videoElement = document.getElementById(`video-${tileIndex}`) as HTMLVideoElement;
     const nameplateElement = document.getElementById(`nameplate-${tileIndex}`) as HTMLDivElement;
 
-    const pauseButtonElement = document.getElementById(`video-pause-${tileIndex}`) as HTMLButtonElement;
-    const resumeButtonElement = document.getElementById(`video-resume-${tileIndex}`) as HTMLButtonElement;
+    const pauseButtonElement = document.getElementById(
+      `video-pause-${tileIndex}`
+    ) as HTMLButtonElement;
+    const resumeButtonElement = document.getElementById(
+      `video-resume-${tileIndex}`
+    ) as HTMLButtonElement;
 
     pauseButtonElement.addEventListener('click', () => {
       if (!tileState.paused) {
@@ -1121,6 +1188,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
 
     this.log(`binding video tile ${tileState.tileId} to ${videoElement.id}`);
     this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+
     this.tileIndexToTileId[tileIndex] = tileState.tileId;
     this.tileIdToTileIndex[tileState.tileId] = tileIndex;
     // TODO: enforce roster names
@@ -1137,7 +1205,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
   }
 
   videoTileWasRemoved(tileId: number): void {
-    this.log(`video tile removed: ${tileId}`);
+    this.log(`video tile updated removed: ${tileId}`);
     this.hideTile(this.tileOrganizer.releaseTileIndex(tileId));
   }
 
@@ -1197,11 +1265,9 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
     if (visibleTileIndices.length === 2 && selfIsVisible) {
       activeTileId = this.tileIndexToTileId[
         visibleTileIndices[0] === selfTileId ? visibleTileIndices[1] : visibleTileIndices[0]
-        ];
+      ];
     }
-    const hasVisibleActiveTile = visibleTileIndices.includes(
-      this.tileIdToTileIndex[activeTileId]
-    );
+    const hasVisibleActiveTile = visibleTileIndices.includes(this.tileIdToTileIndex[activeTileId]);
 
     if (this.activeSpeakerLayout && hasVisibleActiveTile) {
       this.layoutVideoTilesActiveSpeaker(visibleTileIndices, activeTileId);
