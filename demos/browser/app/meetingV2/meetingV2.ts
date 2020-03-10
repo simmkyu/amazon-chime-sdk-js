@@ -143,6 +143,8 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
 
   screenshareTileId = 0;
 
+  previousContentShareAttendeeId: string | null = null;
+
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any).app = this;
@@ -1129,37 +1131,49 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
   }
 
   videoTileDidUpdate(tileState: VideoTileState): void {
-    // this.log(`video tile updated: ${JSON.stringify(tileState, null, '  ')}`);
-    this.log(`video tile updated: ${tileState.tileId}`);
+    this.log(`video tile updated: ${JSON.stringify(tileState, null, '  ')}`);
     if (!tileState.boundAttendeeId) {
       return;
     }
 
-    if (!tileState.boundVideoStream) {
-      return;
-    }
-
-    if (tileState.boundVideoElement) {
-      return;
-    }
-
-    // const selfAttendeeId = this.meetingSession.configuration.credentials.attendeeId;
+    const selfAttendeeId = this.meetingSession.configuration.credentials.attendeeId;
     const modality = new DefaultModality(tileState.boundAttendeeId);
-    if (modality.hasModality(DefaultModality.MODALITY_CONTENT)) {
+
+    if (
+      modality.hasModality(DefaultModality.MODALITY_CONTENT) &&
+      modality.base() === selfAttendeeId
+    ) {
+      // don't bind one's own content
+      return;
+    }
+
+    // This "if" condition is true only when other participants share their content.
+    if (
+      modality.hasModality(DefaultModality.MODALITY_CONTENT) &&
+      modality.base() !== selfAttendeeId
+    ) {
       const tileElement = document.getElementById(`tile-screenshare`) as HTMLDivElement;
       const videoElement = document.getElementById(`video-screenshare`) as HTMLVideoElement;
       tileElement.style.display = 'block';
       this.log(`binding video tile ${tileState.tileId} to ${videoElement.id}`);
 
-      if (this.screenshareTileId) {
-        this.audioVideo.unbindVideoElement(this.screenshareTileId);
-        this.screenshareTileId = 0;
+      if (
+        this.previousContentShareAttendeeId &&
+        this.previousContentShareAttendeeId !== tileState.boundAttendeeId
+      ) {
+        console.warn(`ID changed from ${this.previousContentShareAttendeeId} to ${tileState.boundAttendeeId}`);
+        
+        setTimeout(() => {
+          this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+          this.previousContentShareAttendeeId = tileState.boundAttendeeId;
+        }, 10);
+      } else {
+        this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
+        this.previousContentShareAttendeeId = tileState.boundAttendeeId;
       }
-
-      this.audioVideo.bindVideoElement(tileState.tileId, videoElement);
-      this.screenshareTileId = tileState.tileId;
       return;
     }
+
     const tileIndex = tileState.localTile
       ? 16
       : this.tileOrganizer.acquireTileIndex(tileState.tileId);
@@ -1206,7 +1220,7 @@ export class DemoMeetingApp implements AudioVideoObserver, DeviceChangeObserver 
 
   videoTileWasRemoved(tileId: number): void {
     this.log(`video tile updated removed: ${tileId}`);
-    this.hideTile(this.tileOrganizer.releaseTileIndex(tileId));
+    // this.hideTile(this.tileOrganizer.releaseTileIndex(tileId));
   }
 
   videoAvailabilityDidChange(availability: MeetingSessionVideoAvailability): void {
